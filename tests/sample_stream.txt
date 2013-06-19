@@ -1,0 +1,44 @@
+[?1034h(shdebugger)[01;32mbenjaminplesser@laptop:[01;34m~/.virtualenvs/shdebugger/streamer $[00m ls ~
+[34mAdobe Photoshop CS5.1[39;49m[0m      [34mDropbox[39;49m[0m                    PlesserB_Resume_012013.doc [34mc_programming[39;49m[0m              hello_world.c              precommand.sh
+[34mApplications[39;49m[0m               [34mENV[39;49m[0m                        [34mPublic[39;49m[0m                     [34mexternal_libraries[39;49m[0m         ipython_log.py             [30m[43mrelic_log[39;49m[0m
+[34mApplications (Parallels)[39;49m[0m   [34mLibrary[39;49m[0m                    ReadMe.pdf                 [31mfd.py[39;49m[0m                      light-bg-texture.png       [34mtts[39;49m[0m
+[34mDesktop[39;49m[0m                    [34mMovies[39;49m[0m                     ReadMe_Parrallels.pdf      food_rsvp.py               [34mmy_apps[39;49m[0m                    [34myipit-env[39;49m[0m
+[34mDocuments[39;49m[0m                  [34mMusic[39;49m[0m                      [34mVirtualBox VMs[39;49m[0m             google_test.py             [34mold_ssh[39;49m[0m                    [34myipit_analytics[39;49m[0m
+[34mDownloads[39;49m[0m                  [34mPictures[39;49m[0m                   [34mbenapps[39;49m[0m                    hello.js                   palindromes.py
+(shdebugger)[01;32mbenjaminplesser@laptop:[01;34m~/.virtualenvs/shdebugger/streamer $[00m pwd
+/Users/benjaminplesser/.virtualenvs/shdebugger/streamer
+(shdebugger)[01;32mbenjaminplesser@laptop:[01;34m~/.virtualenvs/shdebugger/streamer $[00m ls pwdls ~[1Ppwdls [K[K[Kpytho[K[K[K[K[Kcat foo[K[K[K[K[K[K[Kcat ls[K[K~[K`ls ~\[K[K[K[K[K[K~/hello.js
+var links = [];
+var casper = require('casper').create();
+
+function getLinks() {
+    var links = document.querySelectorAll('h3.r a');
+    return Array.prototype.map.call(links, function(e) {
+        return e.getAttribute('href')
+    });
+}
+
+casper.start('http://www.hashemian.com/whoami/', function() {
+    // search for 'casperjs' from google form
+    // this.fill('form[action="/search"]', { q: 'casperjs' }, true);
+    this.echo(document.title);
+});
+
+// casper.then(function() {
+//     // aggregate results for the 'casperjs' search
+//     links = this.evaluate(getLinks);
+//     // now search for 'phantomjs' by filling the form again
+//     this.fill('form[action="/search"]', { q: 'phantomjs' }, true);
+// });
+//
+// casper.then(function() {
+//     // aggregate results for the 'phantomjs' search
+//     links = links.concat(this.evaluate(getLinks));
+// });
+
+casper.run(function() {
+    // echo results in some pretty fashion
+    // this.echo(links.length + ' links found:');
+    // this.echo(' - ' + links.join('\n - ')).exit();
+    this.echo('here').exit();
+});(shdebugger)[01;32mbenjaminplesser@laptop:[01;34m~/.virtualenvs/shdebugger/streamer $[00m exit
