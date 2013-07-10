@@ -140,7 +140,7 @@ class StreamingShell(object):
         bash_prompt_cmd = 'export PS1="{}{}"'.format(BASH_PROMPT, current_ps1)
         cmd = "{};script -q -t 0 {}".format(bash_prompt_cmd, self._shell_output_path)
         # This call blocks
-        res = subprocess.call(cmd, shell=True)
+        subprocess.call(cmd, shell=True)
 
     def in_main_loop(self):
         try:

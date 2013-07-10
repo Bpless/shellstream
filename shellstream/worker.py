@@ -86,7 +86,6 @@ class ShellReader(threading.Thread):
                 lines, last_write = write(lines)
 
     def tail(self):
-        output = open("big_test", "w")
         p = subprocess.Popen(["tail", "-f", self.f_name], stdout=subprocess.PIPE)
         while 1:
             time.sleep(.5)
