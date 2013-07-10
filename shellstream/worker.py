@@ -10,17 +10,18 @@ import threading
 import subprocess
 
 from shellstream.utils.colors import *
-from shellstream.backends.http import TransportError
-from shellstream.config import BASH_PROMPT
+from shellstream.transports.http import TransportError
+from shellstream import BASH_PROMPT
 
 
 class StreamWriter(threading.Thread):
 
     @classmethod
-    def write(cls, queue, transport):
+    def write(cls, queue, transport, stream_id):
         instance = cls()
         instance.queue = queue
         instance.transport = transport
+        instance.stream_id = stream_id
         instance.daemon = True
         instance.start()
         return instance
@@ -33,10 +34,14 @@ class StreamWriter(threading.Thread):
             lines = self.queue.get()
             if lines:
                 try:
-                    self.transport.write_to_stream({"content": lines, "in_sequence": 0})
+                    self.write_to_stream({"content": lines, "in_sequence": 0})
                 except TransportError, e:
                     print_red("\n{}".format(e))
                     break
+
+    def write_to_stream(self, data):
+        data["stream"] = self.stream_id
+        self.transport.fetch("api/stream/write/", data)
 
 
 class ShellReader(threading.Thread):
@@ -138,10 +143,10 @@ class ShellReader(threading.Thread):
 class Worker(object):
 
     @classmethod
-    def labor(self, transport, f_name, main_pid):
+    def labor(self, transport, f_name, main_pid, stream_id):
         queue = Queue()
         reader = ShellReader.read(queue, f_name)
-        writer = StreamWriter.write(queue, transport)
+        writer = StreamWriter.write(queue, transport, stream_id)
         while True:
             time.sleep(2)
             if not (reader.is_alive() and writer.is_alive()):

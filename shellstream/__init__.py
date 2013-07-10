@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from shellstream.shell import StreamingShell
 
 
-if __name__ == "__main__":
-    with StreamingShell() as shell:
-        shell.stream()
+HOST = "http://127.0.0.1:8000/"
+BASH_PROMPT = "[SHSTREAM]"

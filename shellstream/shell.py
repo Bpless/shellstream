@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import sys
 import atexit
 import glob
-import os
 import datetime
 import subprocess
+import platform
+import json
+
 import logging
 logger = logging.getLogger(__name__)
-from optparse import OptionParser
 
-from .backends.http import TransportError
-from .utils.io import *
-from .worker import Worker
-from .config import Config, HOST, BASH_PROMPT
-
-# # Normal exit when killed
-# signal(SIGTERM, lambda signum, stack_frame: exit(1))
+from shellstream.transports.http import TransportError
+from shellstream.utils.io import *
+from shellstream.worker import Worker
+from shellstream import HOST, BASH_PROMPT
+from shellstream.authentication import TokenGenerator
+from shellstream.config import Config
 
 
 class StreamingShell(object):
@@ -24,6 +25,7 @@ class StreamingShell(object):
     def __init__(self):
         Config(self)
         self.parent_pid = os.getpid()
+        # TODO: either change this to a timestap or refer to it as datetime
         self.timestamp = datetime.datetime.now().isoformat()
         atexit.register(self.on_abrupt_exit)
 
@@ -43,6 +45,102 @@ class StreamingShell(object):
 
     def on_abrupt_exit(self):
         self._cleanup_processes()
+
+    def stream(self):
+        if os.fork() == 0:
+            # In child process
+            self._write_pid(self._child_pid_path, os.getpid())
+            self._start_worker()
+        else:
+            self._start_recording()
+
+    def authenticate(self):
+        tokenizer = TokenGenerator(self.token)
+        encrypted_token = tokenizer.encode_token()
+
+        try:
+            self.transport.fetch("api/login/", {"encrypted_token": encrypted_token}, response_callback=self.transport.set_session_id)
+        except TransportError, e:
+            print_red("\nFailed during login\n{}\n".format(e))
+            sys.exit(1)
+
+    def create_remote_stream(self):
+        try:
+            self.create_stream()
+        except TransportError, e:
+            print_red("\nFailed to create stream:\n{}\n".format(e))
+            sys.exit(1)
+        else:
+            stream_url = "{}stream/{}/{}/".format(HOST, self.stream_id, self.stream_slug)
+            prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
+            subprocess.call("open {}".format(stream_url), shell=True)
+
+    def create_stream(self):
+        data = self.get_system_info()
+        data["title"] = self.title
+
+        content = self.transport.fetch("api/stream/create/", data)
+        self.stream_id = content.get("stream_id")
+        self.stream_slug = content.get("stream_slug")
+
+    def get_system_info(self):
+        data = {}
+
+        system, node, release, version, machine, processor = platform.uname()
+        if system and "darwin" in system.lower():
+            data["os"] = "Mac OS X"
+            data["os_version"] = platform.mac_ver()[0]
+        else:
+            data["os"] = system
+
+        data["machine"] = machine
+        data["path"] = sys.path
+        data["cwd"] = os.getcwd()
+
+        data["python_version"] = ".".join([str(component) for component in sys.version_info[:3]])
+        data["python_executable"] = sys.executable
+
+        try:
+            data["username"] = subprocess.check_output("id -u -n", shell=True)
+            user_id = subprocess.check_output("id -u", shell=True)
+            if user_id:
+                data["user_id"] = int(user_id)
+        except subprocess.CalledProcessError:
+            pass
+
+        try:
+            data["pip_installed_packages"] = subprocess.check_output("pip freeze", shell=True)
+        except subprocess.CalledProcessError:
+            data["pip_installed_packages"] = "Unknown: pip not installed"
+
+        return {"system_info": json.dumps(data)}
+
+    def _write_pid(self, path, pid):
+        with open(path, "w") as f:
+            f.write("{}".format(pid))
+        return self
+
+    @property
+    def _child_pid_path(self):
+        return "{}child_pid.{}.{}.{}.txt".format(self.output_dir, self.parent_pid, os.getpid(), self.timestamp)
+
+    @property
+    def _parent_pid_path(self):
+        return "{}parent_pid.{}.{}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
+
+    @property
+    def _shell_output_path(self):
+        return "{}streaming_shell.{}.{}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
+
+    def _start_worker(self):
+        Worker.labor(self.transport, self._shell_output_path, self.parent_pid, self.stream_id)
+
+    def _start_recording(self):
+        current_ps1 = os.environ.get("PS1")
+        bash_prompt_cmd = 'export PS1="{}{}"'.format(BASH_PROMPT, current_ps1)
+        cmd = "{};script -q -t 0 {}".format(bash_prompt_cmd, self._shell_output_path)
+        # This call blocks
+        res = subprocess.call(cmd, shell=True)
 
     def in_main_loop(self):
         try:
@@ -73,86 +171,8 @@ class StreamingShell(object):
         except (OSError, IOError, IndexError, ValueError), e:
             logger.warning(e)
 
-    @classmethod
-    def create_user(cls):
-        shell = cls()
-        Config(shell)
-        shell._validate_credentials()
-        transport = shell.TransportKls(username=shell.username, password=shell.password)
-        try:
-            transport.create_user()
-        except TransportError, e:
-            print_red("\nSignup Failure:\n{}\n".format(e))
-            sys.exit(1)
-        else:
-            print_green("\nAlmost there. To Activate {}".format(shell.username))
-            print_green("Check your inbox for an activation email")
-            print_blue("Paste the confirmation link below to the activate your account")
-            url = None
-            while True:
-                url = raw_input(">>>> ENTER THE URL:  ")
-                try:
-                    transport.activate_user(url)
-                except TransportError:
-                    print_red("\nActivation Error: Invalid URL")
-                else:
-                    print_green("\nSuccess, your account has been activated!!")
-                    break
-
-    def stream(self):
-        if os.fork() == 0:
-            # In child process
-            self._write_pid(self._child_pid_path, os.getpid())
-            self._start_worker()
-        else:
-            self._start_recording()
-
-    def authenticate(self):
-        try:
-            self.transport.authenticate()
-        except TransportError, e:
-            print_red("\nFailed during login\n{}\n".format(e))
-            sys.exit(1)
-
     def _init_local_stream_file(self):
         subprocess.call("touch {}".format(self._shell_output_path), shell=True)
-
-    def create_remote_stream(self):
-        try:
-            stream_id, stream_slug = self.transport.create_stream()
-            stream_url = "{}stream/{}/{}/".format(HOST, stream_id, stream_slug)
-            prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
-            subprocess.call("open {}".format(stream_url), shell=True)
-        except TransportError, e:
-            print_red("\nFailed to create stream:\n{}\n".format(e))
-            sys.exit(1)
-
-    def _write_pid(self, path, pid):
-        with open(path, "w") as f:
-            f.write("{}".format(pid))
-        return self
-
-    @property
-    def _child_pid_path(self):
-        return "{}child_pid.{}.{}.{}.txt".format(self.output_dir, self.parent_pid, os.getpid(), self.timestamp)
-
-    @property
-    def _parent_pid_path(self):
-        return "{}parent_pid.{}.{}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
-
-    @property
-    def _shell_output_path(self):
-        return "{}streaming_shell.{}.{}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
-
-    def _start_worker(self):
-        Worker.labor(self.transport, self._shell_output_path, self.parent_pid)
-
-    def _start_recording(self):
-        current_ps1 = os.environ.get("PS1")
-        bash_prompt_cmd = 'export PS1="{}{}"'.format(BASH_PROMPT, current_ps1)
-        cmd = "{};script -q -t 0 {}".format(bash_prompt_cmd, self._shell_output_path)
-        # This call blocks
-        res = subprocess.call(cmd, shell=True)
 
     def _display_intro(self):
         print
@@ -168,24 +188,22 @@ class StreamingShell(object):
         self._validate_title()
 
     def _validate_credentials(self):
-        if not (self.username and self.password):
+        if not (self.token):
             print
-            prompt(print_magenta, "Before you stream, you'll need to enter a username and password")
-            prompt(print_magenta, "If you do not have an account, you can create one by executing the command")
-            print_blue("\tstreamshell create --username=[username] --password=[password]", ["bold", "underline"])
-            print
-            prompt(print_magenta, "Already have an account? Pass your credentials as command line arguments to streamshell")
-            print_blue("\tstreamshell --username=[username] --password=[password]", ["bold", "underline"])
-            print
-            prompt(print_magenta, "Or you can set the SHELL_STREAM_USERNAME, SHELL_STREAM_PASSWORD environment variables")
-            print_blue("\texport SHELL_STREAM_USERNAME=[username] SHELL_STREAM_PASSWORD=[password]", ["bold", "underline"])
-            prompt(print_magenta, "Add the above export command to your ~./bash_profile for extra convienence")
+            prompt(print_magenta, "In order to create tickets, you'll need to provide an API token")
+            prompt(print_magenta, "If you do not already have an account, please sign up!")
+            print_blue("Otherwise visit {}/how/it/works/cli/ to grab your token".format(HOST), ["bold", "underline"])
 
-            if not self.username:
-                self.username = wait_for_response(5, ">>>> ENTER USERNAME: ")
-            if not self.password:
-                self.password = wait_for_response(5, ">>>> ENTER PASSWORD: ")
-            import ipdb; ipdb.set_trace()
+            print
+            prompt(print_magenta, "You can pass your token as a command line argument")
+            print_blue("\tstreamshell --api_token=[your token]", ["bold", "underline"])
+            print
+            prompt(print_magenta, "Or you can set the SHELL_STREAM_TOKEN environment variable with the command")
+            print_blue("\texport SHELL_STREAM_TOKEN=[your token]", ["bold", "underline"])
+            prompt(print_magenta, "Add the above export command to your ~/.bash_profile file for extra convienence")
+
+            if not self.token:
+                self.token = wait_for_response(5, ">>>> ENTER TOKEN: ")
 
     def _validate_output_dir(self):
         if not os.path.isdir(self.output_dir):
