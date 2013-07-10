@@ -55,7 +55,7 @@ def find_scripts():
     Simple Script to find any files to place in the bin/ directory after
     installation.
     """
-    scripts_directory = "scripts"
+    scripts_directory = "shellstream/scripts"
     scripts = []
     try:
         files = os.listdir(os.path.join(os.path.dirname(__file__), scripts_directory))
@@ -83,6 +83,7 @@ if __name__ == '__main__':
         packages=find_packages(exclude=['*tests*']),
         install_requires=install_requires,
         dependency_links=dependency_links,
+        scripts=find_scripts(),
         classifiers=[
             'Programming Language :: Python',
         ],
