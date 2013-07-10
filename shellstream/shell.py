@@ -12,7 +12,7 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 
-from shellstream.transports.http import TransportError
+from shellstream.transport import TransportError
 from shellstream.utils.io import *
 from shellstream.worker import Worker
 from shellstream import HOST, BASH_PROMPT

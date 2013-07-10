@@ -4,7 +4,7 @@ import os
 import tempfile
 from optparse import OptionParser
 
-from shellstream.transports.http import HttpTransport
+from shellstream.transport import HttpTransport
 
 
 class Config(object):

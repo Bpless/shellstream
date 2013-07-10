@@ -1,16 +1,12 @@
-###### MUCH OF THIS CODE TAKEN FROM python-firebase ######
-######  firebase_token_generator.py ##########
 import base64
 import hashlib
 import hmac
-
-__all__ = ['TokenGenerator']
 
 
 class TokenGenerator(object):
 
     def __init__(self, token):
-        assert token, 'Your ShellStream TOKEN is not valid (cause you do not list one)'
+        assert token, 'Your ShellStream TOKEN is not valid (because you did not list one)'
         self.token = token
 
     def _encode(self, bytes):

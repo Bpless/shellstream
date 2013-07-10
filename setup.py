@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# <sure - utility belt for automated testing in python>
+# <shellstream - pipe your terminal IO to the cloud in python>
 # Copyright (C) <2013>  Benjamin Plesser <benjamin.plesser@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify

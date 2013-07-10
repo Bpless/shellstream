@@ -10,7 +10,7 @@ import threading
 import subprocess
 
 from shellstream.utils.colors import *
-from shellstream.transports.http import TransportError
+from shellstream.transport import TransportError
 from shellstream import BASH_PROMPT
 
 

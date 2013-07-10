@@ -23,7 +23,7 @@ STREAM_SHELL_TOKEN = [your token]
 
 # limitations
 
-## This initial version is naive.  It is not cross-platform at this point, depending on a number of unix commands. That will come with time.
+This initial version is naive.  It is not cross-platform at this point, depending on a number of unix commands. That will come with time.
 
 # Motivation
 
