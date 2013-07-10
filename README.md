@@ -13,7 +13,7 @@ shellstream is a python client that pipes your terminal IO to the web:
 
 # To Run
 
-To run StreamShell, you will need to receive an API Token from http://obscure-wave-3305.herokuapp.com/.  To retrieve a token, first sign up for the service (it's free) and then head to this page http://obscure-wave-3305.herokuapp.com/how/it/works/cli/.
+To run StreamShell, you will need to receive an API Token from [coming soon].  To retrieve a token, first sign up for the service (it's free) and then head to this page [coming soon].
 
 Add this token to your `.bash_profile`:
 

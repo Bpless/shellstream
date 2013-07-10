@@ -9,7 +9,7 @@ from Queue import Queue
 import threading
 import subprocess
 
-from shellstream.utils.colors import *
+from shellstream.utils.io import *
 from shellstream.transport import TransportError
 from shellstream import BASH_PROMPT
 
