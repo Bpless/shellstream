@@ -1,8 +1,7 @@
-##!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 from shellstream.shell import StreamingShell
 
 
-if __name__ == "__main__":
+def run():
     with StreamingShell() as shell:
         shell.stream()
