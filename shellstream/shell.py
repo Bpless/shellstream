@@ -73,7 +73,7 @@ class StreamingShell(object):
         else:
             stream_url = "{}stream/{}/{}/".format(HOST, self.stream_id, self.stream_slug)
             prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
-            subprocess.call("open {}".format(stream_url), shell=True)
+            subprocess.call("open {}".format(stream_url + "?fv=1"), shell=True)
 
     def create_stream(self):
         data = self.get_system_info()
