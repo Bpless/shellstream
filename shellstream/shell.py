@@ -211,4 +211,4 @@ class StreamingShell(object):
 
     def _validate_title(self):
         if not self.title:
-            self.title = wait_for_response(5, ">>>> ENTER SESSION TITLE [>5 chars]: ")
+            self.title = wait_for_response(5, ">>>> ENTER ISSUE TITLE [>5 chars]: ")
