@@ -8,6 +8,7 @@ import datetime
 import subprocess
 import platform
 import json
+import webbrowser
 
 import logging
 logger = logging.getLogger(__name__)
@@ -71,9 +72,9 @@ class StreamingShell(object):
             print_red("\nFailed to create stream:\n{}\n".format(e))
             sys.exit(1)
         else:
-            stream_url = "{}stream/{}/{}/".format(HOST, self.stream_id, self.stream_slug)
+            stream_url = "{}stream/{}/{}/?fv=1".format(HOST, self.stream_id, self.stream_slug)
             prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
-            subprocess.call("open {}".format(stream_url + "?fv=1"), shell=True)
+            webbrowser.open_new_tab(stream_url)
 
     def create_stream(self):
         data = self.get_system_info()
