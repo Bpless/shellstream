@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     setup(
         name="shellstream",
-        version='0.0.1.6',
+        version='0.0.1.7',
         description="Python program that pipes your terminal to the cloud",
         long_description=local_file('README.md'),
         author='Benjamin Plesser',
@@ -86,8 +86,8 @@ if __name__ == '__main__':
         entry_points={
                 'console_scripts': [
                     'startstream = shellstream.main:run',
-                    ],
-                },
+                ]
+        },
         classifiers=[
             'Programming Language :: Python',
         ],

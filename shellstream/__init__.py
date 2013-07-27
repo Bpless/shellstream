@@ -1,4 +1,4 @@
 #!/usr/bin/env python
 
-HOST = "http://shellstreamer.com/"
+HOST = "http://www.enginehere.com/"
 BASH_PROMPT = "[SHSTREAM]"
