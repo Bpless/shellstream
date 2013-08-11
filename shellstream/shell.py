@@ -193,7 +193,7 @@ class StreamingShell(object):
             print
             prompt(print_magenta, "In order to create tickets, you'll need to provide an API token")
             prompt(print_magenta, "If you do not already have an account, please sign up!")
-            print_blue("Otherwise visit {}/how/it/works/cli/ to grab your token".format(HOST), ["bold", "underline"])
+            print_blue('Otherwise visit: "{}how/it/works/cli/" to grab your token'.format(HOST), ["bold", "underline"])
 
             print
             prompt(print_magenta, "You can pass your token as a command line argument")

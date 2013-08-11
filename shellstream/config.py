@@ -19,8 +19,8 @@ class Config(object):
                           action="store", type="string",
                           help="your api token"),
         parser.add_option("-t", "--title", dest="title",
-                      action="store", type="string",
-                      help="the title of the ticket")
+                          action="store", type="string",
+                          help="the title of the ticket")
         parser.add_option("-v", "--verbose", dest="verbose",
                           action="store", type="string",
                           help="Set logging level to verbose")
