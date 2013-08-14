@@ -72,7 +72,7 @@ class StreamingShell(object):
             print_red("\nFailed to create stream:\n{}\n".format(e))
             sys.exit(1)
         else:
-            stream_url = "{}stream/{}/{}/?fv=1".format(HOST, self.stream_id, self.stream_slug)
+            stream_url = "{}stream/{}/{}/".format(HOST, self.stream_id, self.stream_slug)
             prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
             webbrowser.open_new_tab(stream_url)
 
@@ -137,7 +137,7 @@ class StreamingShell(object):
         Worker.labor(self.transport, self._shell_output_path, self.parent_pid, self.stream_id)
 
     def _start_recording(self):
-        current_ps1 = os.environ.get("PS1")
+        current_ps1 = os.environ.get("PS1", "\\w $\\[\\033[00m\\]")
         bash_prompt_cmd = 'export PS1="{}{}"'.format(BASH_PROMPT, current_ps1)
         cmd = "{};script -q -t 0 {}".format(bash_prompt_cmd, self._shell_output_path)
         # This call blocks

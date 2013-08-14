@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import sys
 import re
 import time
 import signal
 from ansi2html import Ansi2HTMLConverter
-from Queue import Queue
+from Queue import Queue, Empty
 import threading
 import subprocess
 
@@ -15,6 +16,7 @@ from shellstream import BASH_PROMPT
 
 
 class StreamWriter(threading.Thread):
+    chunk_size = 7167
 
     @classmethod
     def write(cls, queue, transport, stream_id):
@@ -23,6 +25,8 @@ class StreamWriter(threading.Thread):
         instance.transport = transport
         instance.stream_id = stream_id
         instance.daemon = True
+        instance.buffer = ""
+        instance.last_write = time.time() - 60
         instance.start()
         return instance
 
@@ -31,17 +35,34 @@ class StreamWriter(threading.Thread):
 
     def do_work(self):
         while True:
-            lines = self.queue.get()
-            if lines:
-                try:
-                    self.write_to_stream({"content": lines, "in_sequence": 0})
-                except TransportError, e:
-                    print_red("\n{}".format(e))
-                    break
+            try:
+                lines = self.queue.get(False)
+            except Empty:
+                self.write_to_stream()
+                lines = ""
+                time.sleep(3)
+                continue
+            else:
+                if lines:
+                    self.buffer += lines
+                    self.write_to_stream()
 
-    def write_to_stream(self, data):
-        data["stream"] = self.stream_id
-        self.transport.fetch("api/stream/write/", data)
+    def write_to_stream(self):
+        # TODO: We are dropping extra large chunks here...
+        chunk = self.buffer[:self.chunk_size]
+        if len(chunk) and time.time() - self.last_write > 3:
+            data = {}
+            data["stream"] = self.stream_id
+            data["content"] = chunk
+            try:
+                self.transport.fetch("api/stream/write/", data)
+            except TransportError, e:
+                print_red("\n{}".format(e))
+                # TODO: need to exit process
+                sys.exit()
+            else:
+                self.buffer = ""
+                self.last_write = time.time()
 
 
 class ShellReader(threading.Thread):
@@ -62,11 +83,6 @@ class ShellReader(threading.Thread):
         self.do_work()
 
     def do_work(self):
-        def should_empty_buffer(lines, last_write):
-            return lines and int(last_write - time.time()) > 10
-
-        def should_write(html, lines):
-            return BASH_PROMPT in html
 
         def write(lines):
             self.queue.put(" ".join(lines))
@@ -79,10 +95,8 @@ class ShellReader(threading.Thread):
             if line:
                 html = self.parse_line(line)
                 lines.append(html)
-                if should_write(html, lines):
-                    lines, last_write = write(lines)
+                lines, last_write = write(lines)
             else:
-                # if should_empty_buffer(lines, last_write):
                 lines, last_write = write(lines)
 
     def tail(self):
