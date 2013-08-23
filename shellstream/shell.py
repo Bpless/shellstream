@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 from shellstream.transport import TransportError
 from shellstream.utils.io import *
 from shellstream.worker import Worker
-from shellstream import HOST, BASH_PROMPT
+from shellstream import BASH_PROMPT
 from shellstream.authentication import TokenGenerator
 from shellstream.config import Config
 
@@ -72,7 +72,7 @@ class StreamingShell(object):
             print_red("\nFailed to create stream:\n{}\n".format(e))
             sys.exit(1)
         else:
-            stream_url = "{}stream/{}/{}/".format(HOST, self.stream_id, self.stream_slug)
+            stream_url = "http://www.enginehere.com/stream/{}/{}/".format(self.stream_id, self.stream_slug)
             prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
             webbrowser.open_new_tab(stream_url)
 
@@ -193,7 +193,7 @@ class StreamingShell(object):
             print
             prompt(print_magenta, "In order to create tickets, you'll need to provide an API token")
             prompt(print_magenta, "If you do not already have an account, please sign up!")
-            print_blue('Otherwise visit: "{}how/it/works/cli/" to grab your token'.format(HOST), ["bold", "underline"])
+            print_blue('Otherwise visit: "http://www.enginehere.com/how/it/works/cli/" to grab your token', ["bold", "underline"])
 
             print
             prompt(print_magenta, "You can pass your token as a command line argument")
