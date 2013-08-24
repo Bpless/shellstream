@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-import sys
 import re
 import time
 import signal
@@ -15,18 +14,31 @@ from shellstream.transport import TransportError
 from shellstream import BASH_PROMPT
 
 
+def process_killing_factory(pid):
+    def func(error_msg="There was an error in shellstream"):
+        try:
+            print_red(error_msg)
+            os.kill(pid, signal.SIGQUIT)
+        except OSError:
+            pass
+    return func
+
+
 class StreamWriter(threading.Thread):
     chunk_size = 7167
+    max_writes = 40
 
     @classmethod
-    def write(cls, queue, transport, stream_id):
+    def write(cls, queue, transport, stream_id, process_killer):
         instance = cls()
         instance.queue = queue
         instance.transport = transport
         instance.stream_id = stream_id
+        instance.process_killer = process_killer
         instance.daemon = True
         instance.buffer = ""
         instance.last_write = time.time() - 60
+        instance.write_count = 0
         instance.start()
         return instance
 
@@ -35,17 +47,27 @@ class StreamWriter(threading.Thread):
 
     def do_work(self):
         while True:
+            if self.write_count == self.max_writes:
+                self.process_killer("You have exceeded the max data written cap for this issue")
+                break
+
             try:
                 lines = self.queue.get(False)
             except Empty:
-                self.write_to_stream()
+                write_success = self.write_to_stream()
+                if not write_success:
+                    self.process_killer("www.shellstream.com is having trouble connecting")
+                    break
+
                 lines = ""
                 time.sleep(3)
-                continue
             else:
                 if lines:
                     self.buffer += lines
-                    self.write_to_stream()
+                    write_success = self.write_to_stream()
+                    if not write_success:
+                        self.process_killer("www.shellstream.com is having trouble connecting")
+                        break
 
     def write_to_stream(self):
         # TODO: We are dropping extra large chunks here...
@@ -56,13 +78,13 @@ class StreamWriter(threading.Thread):
             data["content"] = chunk
             try:
                 self.transport.fetch("api/stream/write/", data)
-            except TransportError, e:
-                print_red("\n{}".format(e))
-                # TODO: need to exit process
-                sys.exit()
+            except TransportError:
+                return False
             else:
                 self.buffer = ""
                 self.last_write = time.time()
+                self.write_count += 1
+        return True
 
 
 class ShellReader(threading.Thread):
@@ -158,14 +180,10 @@ class Worker(object):
     @classmethod
     def labor(self, transport, f_name, main_pid, stream_id):
         queue = Queue()
+        process_killer = process_killing_factory(main_pid)
         reader = ShellReader.read(queue, f_name)
-        writer = StreamWriter.write(queue, transport, stream_id)
+        writer = StreamWriter.write(queue, transport, stream_id, process_killer)
         while True:
             time.sleep(2)
             if not (reader.is_alive() and writer.is_alive()):
-                try:
-                    os.kill(main_pid, signal.SIGQUIT)
-                except OSError:
-                    pass
-                finally:
-                    break
+                break
