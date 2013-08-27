@@ -134,7 +134,7 @@ class ShellReader(threading.Thread):
         # html = self.escape_html(html)
         html = self.remove_undos(html)
         _class = "bash-input" if BASH_PROMPT in html else "bash-output"
-        return '<pre class="{}">{}</pre>'.format(_class, html)
+        return '<pre class="{0}">{1}</pre>'.format(_class, html)
 
     def remove_undos(self, html):
         _buffer = []
@@ -146,7 +146,7 @@ class ShellReader(threading.Thread):
         return "".join(_buffer)
 
     def pad_input(self, html):
-        return '[div] class="shell-input"[--]{}[/div][div] class="shell-output[--][pre]'.format(html)
+        return '[div] class="shell-input"[--]{0}[/div][div] class="shell-output[--][pre]'.format(html)
 
     def close_padding(self):
         return '[/pre][/div]'
@@ -161,7 +161,7 @@ class ShellReader(threading.Thread):
             if object.group() == "</span>":
                 return "[/sp]"
             else:
-                return "[sp]{}[--]".format(object.group(1))
+                return "[sp]{0}[--]".format(object.group(1))
         return re.sub(self.span_regex, replace_it, html)
 
     def escape_pre(self, html):
@@ -170,7 +170,7 @@ class ShellReader(threading.Thread):
             if not filler or filler == "\x08":
                 return ""
             else:
-                return "[pr]{}[/pr]".format(filler)
+                return "[pr]{0}[/pr]".format(filler)
 
         return re.sub(self.pre_regex, replace_it, html)
 
