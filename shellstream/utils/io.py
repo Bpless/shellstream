@@ -14,7 +14,7 @@ def wait_for_response(min_chars, prompt):
 
 
 def prompt(func, text):
-    func(">>>> {}".format(text))
+    func(">>>> {0}".format(text))
 
 
 def color_print(color, msg, attrs=None):
@@ -28,7 +28,7 @@ def init_printers():
 
     for color in ["red", "green", "yellow", "magenta", "blue", "grey", "cyan"]:
         f = partial(color_print, color)
-        fname = "print_{}".format(color)
+        fname = "print_{0}".format(color)
         if color not in mod.__dict__:  # Prevent overrides if run from an IDE.
             mod.__dict__[fname] = f
             mod.__dict__["__all__"].append(fname)
