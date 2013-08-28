@@ -112,7 +112,7 @@ class StreamingShell(object):
             pass
 
         try:
-            data["pip_installed_packages"] = subprocess.Popen("pip freeze", shell=True, stdout=subprocess.PIPE.stdout.read()
+            data["pip_installed_packages"] = subprocess.Popen("pip freeze", shell=True, stdout=subprocess.PIPE).stdout.read()
         except subprocess.CalledProcessError:
             data["pip_installed_packages"] = "Unknown: pip not installed"
 
