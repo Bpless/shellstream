@@ -74,7 +74,8 @@ class StreamingShell(object):
         else:
             stream_url = "http://www.enginehere.com/stream/{0}/{1}/".format(self.stream_id, self.stream_slug)
             prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {0}".format(stream_url))
-            webbrowser.open_new_tab(stream_url)
+            # Commenting this out for now, since I'm using a terminal without any x windows.
+            # webbrowser.open_new_tab(stream_url)
 
     def create_stream(self):
         data = self.get_system_info()
@@ -102,15 +103,15 @@ class StreamingShell(object):
         data["python_executable"] = sys.executable
 
         try:
-            data["username"] = subprocess.check_output("id -u -n", shell=True)
-            user_id = subprocess.check_output("id -u", shell=True)
+            data["username"] = subprocess.Popen("id -n -u", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+            user_id = subprocess.Popen("id -u", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
             if user_id:
                 data["user_id"] = int(user_id)
         except subprocess.CalledProcessError:
             pass
 
         try:
-            data["pip_installed_packages"] = subprocess.check_output("pip freeze", shell=True)
+            data["pip_installed_packages"] = subprocess.Popen("pip freeze", shell=True, stdout=subprocess.PIPE.stdout.read()
         except subprocess.CalledProcessError:
             data["pip_installed_packages"] = "Unknown: pip not installed"
 
@@ -139,7 +140,8 @@ class StreamingShell(object):
     def _start_recording(self):
         current_ps1 = os.environ.get("PS1", "\\w $\\[\\033[00m\\]")
         bash_prompt_cmd = 'export PS1="{0}{1}"'.format(BASH_PROMPT, current_ps1)
-        cmd = "{0};script -q -t 0 {1}".format(bash_prompt_cmd, self._shell_output_path)
+        # Be quite and flush output after each write.
+        cmd = "{0};script -q -f {1}".format(bash_prompt_cmd, self._shell_output_path)
         # This call blocks
         subprocess.call(cmd, shell=True)
 
