@@ -74,8 +74,9 @@ class StreamingShell(object):
         else:
             stream_url = "http://www.enginehere.com/stream/{0}/{1}/".format(self.stream_id, self.stream_slug)
             prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {0}".format(stream_url))
-            # Commenting this out for now, since I'm using a terminal without any x windows.
-            # webbrowser.open_new_tab(stream_url)
+            # Don't bother to open a terminal-based browser
+            if not webbrowser.get().name == 'lynx':
+                webbrowser.open_new_tab(stream_url)
 
     def create_stream(self):
         data = self.get_system_info()
