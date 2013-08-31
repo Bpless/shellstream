@@ -17,7 +17,7 @@ class TransportError(Exception):
 class HttpTransport(RequestHelper):
 
     def get_endpoint(self, path):
-        return "{}{}".format(HOST, path)
+        return "{0}{1}".format(HOST, path)
 
     def parse_response(self, response):
         if response.ok:
@@ -32,7 +32,7 @@ class HttpTransport(RequestHelper):
                 else:
                     raise TransportError(res.get("errors"))
         else:
-            raise TransportError("Status Code {}:{}".format(response.status_code, response.content))
+            raise TransportError("Status Code {0}:{1}".format(response.status_code, response.content))
 
     def fetch(self, path, data=None, response_callback=None, method="post"):
         endpoint = self.get_endpoint(path)

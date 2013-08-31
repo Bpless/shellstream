@@ -34,7 +34,7 @@ def unescaped_html_content(html):
                 ]
 
     matcher = "|".join([key for key in regex_map])
-    res = re.sub(r"{}".format(matcher), translate, html)
+    res = re.sub(r"{0}".format(matcher), translate, html)
     import ipdb; ipdb.set_trace()
 
 def test_reader():

@@ -62,19 +62,21 @@ class StreamingShell(object):
         try:
             self.transport.fetch("api/login/", {"encrypted_token": encrypted_token}, response_callback=self.transport.set_session_id)
         except TransportError, e:
-            print_red("\nFailed during login\n{}\n".format(e))
+            print_red("\nFailed during login\n{0}\n".format(e))
             sys.exit(1)
 
     def create_remote_stream(self):
         try:
             self.create_stream()
         except TransportError, e:
-            print_red("\nFailed to create stream:\n{}\n".format(e))
+            print_red("\nFailed to create stream:\n{0}\n".format(e))
             sys.exit(1)
         else:
-            stream_url = "http://www.enginehere.com/stream/{}/{}/".format(self.stream_id, self.stream_slug)
-            prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {}".format(stream_url))
-            webbrowser.open_new_tab(stream_url)
+            stream_url = "http://www.enginehere.com/stream/{0}/{1}/".format(self.stream_id, self.stream_slug)
+            prompt(print_green, "\nAll of your commands within THIS SHELL will be piped to {0}".format(stream_url))
+            # Don't bother to open a terminal-based browser
+            if not webbrowser.get().name == 'lynx':
+                webbrowser.open_new_tab(stream_url)
 
     def create_stream(self):
         data = self.get_system_info()
@@ -102,15 +104,15 @@ class StreamingShell(object):
         data["python_executable"] = sys.executable
 
         try:
-            data["username"] = subprocess.check_output("id -u -n", shell=True)
-            user_id = subprocess.check_output("id -u", shell=True)
+            data["username"] = subprocess.Popen("id -n -u", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+            user_id = subprocess.Popen("id -u", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
             if user_id:
                 data["user_id"] = int(user_id)
         except subprocess.CalledProcessError:
             pass
 
         try:
-            data["pip_installed_packages"] = subprocess.check_output("pip freeze", shell=True)
+            data["pip_installed_packages"] = subprocess.Popen("pip freeze", shell=True, stdout=subprocess.PIPE).stdout.read()
         except subprocess.CalledProcessError:
             data["pip_installed_packages"] = "Unknown: pip not installed"
 
@@ -118,28 +120,29 @@ class StreamingShell(object):
 
     def _write_pid(self, path, pid):
         with open(path, "w") as f:
-            f.write("{}".format(pid))
+            f.write("{0}".format(pid))
         return self
 
     @property
     def _child_pid_path(self):
-        return "{}child_pid.{}.{}.{}.txt".format(self.output_dir, self.parent_pid, os.getpid(), self.timestamp)
+        return "{0}child_pid.{1}.{2}.{3}.txt".format(self.output_dir, self.parent_pid, os.getpid(), self.timestamp)
 
     @property
     def _parent_pid_path(self):
-        return "{}parent_pid.{}.{}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
+        return "{0}parent_pid.{1}.{2}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
 
     @property
     def _shell_output_path(self):
-        return "{}streaming_shell.{}.{}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
+        return "{0}streaming_shell.{1}.{2}.txt".format(self.output_dir, self.parent_pid, self.timestamp)
 
     def _start_worker(self):
         Worker.labor(self.transport, self._shell_output_path, self.parent_pid, self.stream_id)
 
     def _start_recording(self):
         current_ps1 = os.environ.get("PS1", "\\w $\\[\\033[00m\\]")
-        bash_prompt_cmd = 'export PS1="{}{}"'.format(BASH_PROMPT, current_ps1)
-        cmd = "{};script -q -t 0 {}".format(bash_prompt_cmd, self._shell_output_path)
+        bash_prompt_cmd = 'export PS1="{0}{1}"'.format(BASH_PROMPT, current_ps1)
+        # Be quite and flush output after each write.
+        cmd = "{0};script -q -f {1}".format(bash_prompt_cmd, self._shell_output_path)
         # This call blocks
         subprocess.call(cmd, shell=True)
 
@@ -163,7 +166,7 @@ class StreamingShell(object):
 
     def _clean_child_process(self):
         try:
-            child_pid_path = glob.glob("{}child_pid.{}.*".format(self.output_dir, self.parent_pid))[0]
+            child_pid_path = glob.glob("{0}child_pid.{1}.*".format(self.output_dir, self.parent_pid))[0]
             with open(child_pid_path, "r") as child_pid_file:
                 child_pid = child_pid_file.read()
 
@@ -173,11 +176,11 @@ class StreamingShell(object):
             logger.warning(e)
 
     def _init_local_stream_file(self):
-        subprocess.call("touch {}".format(self._shell_output_path), shell=True)
+        subprocess.call("touch {0}".format(self._shell_output_path), shell=True)
 
     def _display_intro(self):
         print
-        prompt(print_green, "Beginning StreamingShell mode [writing to {}]".format(self.output_dir))
+        prompt(print_green, "Beginning StreamingShell mode [writing to {0}]".format(self.output_dir))
         prompt(print_green, "To exit this mode, press the following keys")
         print_blue("\tctrl + d", ["bold", "underline"])
         print

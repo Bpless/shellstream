@@ -30,4 +30,4 @@ class Config(object):
         streamer.token = options.token or os.getenv("SHELL_STREAM_TOKEN")
         streamer.title = options.title
         streamer.transport = HttpTransport()
-        streamer.output_dir = options.output_dir or "{}/streamshell/".format(tempfile.gettempdir())
+        streamer.output_dir = options.output_dir or "{0}/streamshell/".format(tempfile.gettempdir())
