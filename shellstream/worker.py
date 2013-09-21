@@ -122,7 +122,7 @@ class ShellReader(threading.Thread):
                 lines, last_write = write(lines)
 
     def tail(self):
-        p = subprocess.Popen(["tail", "-f", self.f_name], stdout=subprocess.PIPE)
+        p = subprocess.Popen("tail -f {0}".format(self.f_name), shell=True, stdout=subprocess.PIPE)
         while 1:
             time.sleep(.5)
             line = p.stdout.readline()

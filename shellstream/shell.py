@@ -142,7 +142,7 @@ class StreamingShell(object):
         current_ps1 = os.environ.get("PS1", "\\w $\\[\\033[00m\\]")
         bash_prompt_cmd = 'export PS1="{0}{1}"'.format(BASH_PROMPT, current_ps1)
         # Be quite and flush output after each write.
-        cmd = "{0};script -q -f {1}".format(bash_prompt_cmd, self._shell_output_path)
+        cmd = "{0};script -q -t 0 {1}".format(bash_prompt_cmd, self._shell_output_path)
         # This call blocks
         subprocess.call(cmd, shell=True)
 
@@ -163,6 +163,8 @@ class StreamingShell(object):
             self._clean_child_process()
         except OSError:
             pass
+        finally:
+            self._clean_zombie_tail()
 
     def _clean_child_process(self):
         try:
@@ -175,8 +177,15 @@ class StreamingShell(object):
         except (OSError, IOError, IndexError, ValueError), e:
             logger.warning(e)
 
+    def _clean_zombie_tail(self):
+        # subprocess.call('ps -ef | grep "streaming_shell" |  tr -s " " | cut -d " " -f 3 | xargs -n 1 kill', shell=True, stderr=subprocess.PIPE)
+        try:
+            subprocess.check_call('ps -ef | grep "streaming_shell" |  tr -s " " | cut -d " " -f 3 | xargs -n 1 kill', shell=True, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            pass
+
     def _init_local_stream_file(self):
-        subprocess.call("touch {0}".format(self._shell_output_path), shell=True)
+        subprocess.call("touch {0}".format(self._shell_output_path), shell=True, stdout=None)
 
     def _display_intro(self):
         print
