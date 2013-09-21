@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     setup(
         name="shellstream",
-        version='0.0.2.1',
+        version='0.0.2.2',
         description="Python program that pipes your terminal to the cloud",
         long_description=local_file('README.md'),
         author='Benjamin Plesser',
