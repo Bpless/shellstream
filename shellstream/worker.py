@@ -60,7 +60,7 @@ class StreamWriter(threading.Thread):
                     break
 
                 lines = ""
-                time.sleep(3)
+                time.sleep(1)
             else:
                 if lines:
                     self.buffer += lines
