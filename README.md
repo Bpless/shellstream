@@ -3,7 +3,7 @@
 
 # What is it?
 
-shellstream is a python client that pipes your terminal IO to the web:
+shellstream is a Python client that pipes your terminal IO to the web.  Previously, there was a hosted endpoint for receiving your stream.  I have taken down that server, so this app will not work at present.  I plan to package a Flask or Tornado server into this app so that it can be self-hosted.
 
 # To Install
 
@@ -28,4 +28,4 @@ When you've got an issue at the command line and need help online, copy and past
 
 # Limitations
 
-This initial version is naive.  It is not cross-platform at this point, depending on a number of unix commands. That will come with time.
+This initial version is naive.  It is not cross-platform at this point, dependent on a number of unix commands. There are also zero tests at present -- I plan to add them shortly.
